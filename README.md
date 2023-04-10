@@ -1,5 +1,7 @@
 # DynoMem: A Jurassic Approach to Memory in x86-64 and Aarch64 Assembly
 
+UNDER ACTIVE DEVELOPMENT
+
 # Introduction
 
 DynoMem is a part of [TransGatacca](https://github.com/chubek/TransGatacca). It is a small piece of code used in this application to allocate, unallocate, reallocate, copy memory and also contains implementation of strlen and strcpy.
