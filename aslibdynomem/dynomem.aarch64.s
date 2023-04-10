@@ -14,391 +14,390 @@
     // memmap sys call code
     .equ SYS_mmap, 222 
     
-    #define SYSCREG x8
-
-    // dynomem_abisubr_byte*_stalloc args
-    #define STALLOC_LEN x0
-    #define RESULT_STALLOC_ADDR x0
-
-    // dynomem_abisubr_byte*_alloc args
-    #define SYSCARG_ADDR x0
-    #define SYSCARG_LEN x1
-    #define SYSCARG_PROT x2
-    #define SYSCARG_FLAGS x3
-    #define SYSCARG_FILEDESC x4
-    #define SYSCARG_OFFSET x5
-
-    // dynomem_abisubr_byte*_dyrealloc args
-    #define SYSCARG_OLDADDR x0
-    #define SYSCARG_OLDSIZE x1
-    #define SYSCARG_NEWSIZE x2
-    #define BYTENUM_REALLOC x3
-    #define SYSCARG_FLAGS_REMAP x3
-    #define SYSCARG_NEWADDR_REMAP x4
-
-    // dynomem_abisubr_byte*_udynalloc args
-    #define SYSCARG_ADDR_UNALLOC x0
-    #define SYSCARG_LEN_UNALLOC x1
-
-    // dynomem_abisubr_byte*_cpy args
-    #define ADDR_SRC x0
-    #define ADDR_DST x1
-    #define CPYLEN x2
-    #define ADDR_OFFSET_CPY x3
-    #define CPY_RESULT x0
-
-    // dynomem_abisubr_byte_cpyset args
-    #define ADDR_A1_STCPY x0
-    #define ADDR_A2_STCPY x1
-    #define CPYLEN_STCPY x3
-    #define STCPY_OFFSET x4
-    #define RESULT_STCPY x0
-
-    // dynomem_abisubr_byte*_valueset args
-    #define ADDR_SETCONST x0
-    #define SETCONST_VAL x1
-    #define SETCONST_LEN x2
-    #define ADDR_OFFSET_SETCONST x3
-    #define CONSTSET_RESULT x0
-
-    // dynomem_abisubr_byte*_rangeset args
-    #define ADDR_SETRANGE x0
-    #define SETRANGE_START_VAL x1
-    #define SETRANGE_END_VAL x2
-    #define ADDR_OFFSET_SETRANGE x3
-    #define RANGESET_RESULT x0
-
-    // dynomem_abisubr_byte*_sumup args
-    #define ADDR_SUM x0
-    #define SUM_LEN x1
-    #define ADDR_OFFSET_SUM x2
-    #define SUM_RESULT x0
-
-    // dynomem_abisubr_byte*_dotp args
-    #define ADDR_A1_DOTP x0
-    #define ADDR_A2_DOTP x1
-    #define DOTP_LEN x2
-    #define OFFSET_DOTP x3
-    #define DOTP_RESULT x0
-
-    // dynomem_abisubr_byte*_matmul args
-    #define ADDR_A1_MMUL x0
-    #define ADDR_A2_MMUL x1
-    #define CHUNK_NUM_MMUL x2
-    #define MMUL_LEN x3
-    #define OFFSET_MMUL x4
-    #define MATMUL_RESULT x0
-
-    /* <---dynomem_abisubr_byte*_arrlen*stp data */
-    // address to the beginning of the contiguous memory block
-    #define ADDR_ARRLEN x0
-    // offset of that address, to be multiplied by number of bytes before adding to the address
-    #define OFFSET_ARRLEN x1
-    // number of bytes for n-bytes subroutine
-    #define NBYTES_LEN x2
-    // result, the length of the null-terminated byt/half-word/word/double-word/quad-word array
-    #define ARRLEN_RESULT x0    
-    // temporary address for holding incremented pointer
-    #define TMPADDR_ARRLEN x8
-    // grabbed data from memory --- word
-    #define ELEM1W w9 // 1stp, 2stp, 4stp, 8stp word
-    #define ELEM2W w10 // 2stp, 4stp, 8stp word
-    #define ELEM3W w11 // 4stp, 8stp word
-    #define ELEM4W w12 // 4stp, 8stp word
-    #define ELEM5W w13 // 8stp word
-    #define ELEM6W w14 // 8stp word 
-    #define ELEM7W w15 // 8stp word 
-    #define ELEM8W w16 // 8stp word    
-    // grabbed data from memory --- dword
-    #define ELEM1X x9 // 1stp, 2stp, 4stp, 8stp dword
-    #define ELEM2X x10 // 2stp, 4stp, 8stp dword
-    #define ELEM3X x11 // 4stp, 8stp dword
-    #define ELEM4X x12 // 4stp, 8stp dword
-    #define ELEM5X x13 // 8stp dword
-    #define ELEM6X x14 // 8stp dword 
-    #define ELEM7X x15 // 8stp dword 
-    #define ELEM8X x16 // 8stp dword
-    // index holder for 128bit
-    #define NBYTES_INDEX x17
-    /* dynomem_abisubr_byte*_arrlen*stp data---> */
-
-
-    // dynomem_abisubr_byte*_compare
-    #define ADDR_A1_CMP x0
-    #define ADDR_A2_CMP x1
-    #define CMP_LEN x2
-    #define OFFSET_CMP x3
-    #define CMP_RESULT x0
-
-    // dynomem_abisubr_byte*_checkfree
-    #define ADDR_CHFREE x0
-    #define CHFREE_LEN x1
-    #define OFFSET_CHFREE x2
-    #define CHFREE_RESULT x0
-
-    // dynomem_abisubr_getlen args
-    #define ROUNDUP_P2 x0
+    SYSCALLREG .req  x8
 
     /*      Declarations    */
 
-    /*  <---mmap-io subroutines    */
+    /*  <---memory [shared|stack|dynamic] (un/re)allocaion subroutines    */
 
     /*   stalloc for freeing up space on user-space stack   */
     // subroutines for stalloc
-    .global dynomem_abisubr_byte_stalloc 
-    .global dynomem_abisubr_hword_stalloc
-    .global dynomem_abisubr_word_stalloc
-    .global dynomem_abisubr_qword_stalloc
-    .global dynomem_abisubr_nbyte_stalloc
-    // macros for stalloc
-    #define STA_LEN x0
-    #define STA_NBYTES x1
-    #define STA_RET_ADDR x0
+    .global dynomem_abi_8bitalign_stalloc 
+    .global dynomem_abi_16bitalign_stalloc
+    .global dynomem_abi_32bitalign_stalloc
+    .global dynomem_abi_64bitalign_stalloc
+    .global dynomem_abi_premultlen_stalloc
+    // aliases for stalloc
+    STALLOC_LEN .req x0
+    STALLOC_RET .req x0
 
-    /*   dyalloc for dynamically allocating memory dynamically   */
+    /*   dyalloc for dynamically allocating memory   */
     // subroutines for dyalloc   
-    .global dynomem_abisubr_byte_dyalloc
-    .global dynomem_abisubr_hword_dyalloc
-    .global dynomem_abisubr_word_dyalloc
-    .global dynomem_abisubr_qword_dyalloc
-    .global dynomem_abisubr_nbyte_dyalloc
-    // macros for dyalloc
-    #define SYSCARG_ADDR x0
-    #define SYSCARG_LEN x1
-    #define SYSCARG_PROT x2
-    #define SYSCARG_FLAGS x3
-    #define SYSCARG_FILEDESC x4
-    #define SYSCARG_OFFSET x5
-    #define DYALLOC_RET x0
+    .global dynomem_abi_8bitalign_dyalloc
+    .global dynomem_abi_16bitalign_dyalloc
+    .global dynomem_abi_32bitalign_dyalloc
+    .global dynomem_abi_64bitalign_dyalloc
+    .global dynomem_abi_premultlen_dyalloc
+    // aliases for dyalloc
+    SYSCARG_ADDR .req x0
+    SYSCARG_LEN .req x1
+    SYSCARG_PROT .req x2
+    SYSCARG_FLAGS .req x3
+    SYSCARG_FILEDESC .req x4
+    SYSCARG_OFFSET .req x5
+    DYALLOC_RET .req x0
 
-    /*   dyalloc for dynamically allocating memory dynamically   */
-    // subroutines for dyalloc   
-    .global dynomem_abisubr_byte_dyrealloc
-    .global dynomem_abisubr_hword_dyrealloc
-    .global dynomem_abisubr_word_dyrealloc
-    .global dynomem_abisubr_qword_dyrealloc
-    .global dynomem_abisubr_nbyte_dyrealloc
+    /*   dyrealloc for resizing dynamically allocated memory   */
+    // subroutines for dyrealloc   
+    .global dynomem_abi_8bitalign_dyrealloc
+    .global dynomem_abi_16bitalign_dyrealloc
+    .global dynomem_abi_32bitalign_dyrealloc
+    .global dynomem_abi_64bitalign_dyrealloc
+    .global dynomem_abi_premultlen_dyrealloc
+    // aliases for dyrealloc
+    SYSCARG_OLDADDR .req x0
+    SYSCARG_OLDSIZE .req x1
+    SYSCARG_NEWSIZE .req x2
+    SYSCARG_FLAGS_REMAP .req x3
+    SYSCARG_NEWADDR_REMAP .req x4
+    DYREALLOC_RET .req x0
     
-    .global dynomem_abisubr_byte_udynalloc
-    .global dynomem_abisubr_hword_udynalloc
-    .global dynomem_abisubr_word_udynalloc
-    .global dynomem_abisubr_qword_udynalloc
-    .global dynomem_abisubr_nbyte_udynalloc
+    /*   dyunalloc for freeing up dynamically-allocated memory   */
+    // subroutines for dyunalloc 
+    .global dynomem_abi_8bitalign_dyunalloc
+    .global dynomem_abi_16bitalign_dyunalloc
+    .global dynomem_abi_32bitalign_dyunalloc
+    .global dynomem_abi_64bitalign_dyunalloc
+    .global dynomem_abi_premultlen_dyunalloc
+    // aliases for dyunalloc
+    SYSCARG_ADDR_UNALLOC .req x0
+    SYSCARG_LEN_UNALLOC .req x1
+    DYUNALLOC_RET .req x0
 
-    /*   linkmem for sharing memory for IPC using POSIX calls   */
-    // subroutines for linkmem
-    .global dynomem_abisubr_linkmem
-     // macros for linkmem
-    #define SYSCARG_NAME_LINK x0
-    #define SYSCARG_OFLAG x1
-    #define SYSCARG_MODE x2
-    #define LINKMEM_RET x0
+    /*   linkshmem for sharing memory for IPC using POSIX calls   */
+    // subroutines for linkshmem
+    .global dynomem_abi_linkshmem
+     // aliases for linkshmem
+    SYSCARG_NAME_LINK .req x0
+    SYSCARG_OFLAG .req x1
+    SYSCARG_MODE .req x2
+    LINKMEM_RET .req x0
+
+    /*   unlinkshmem for unlinking shared memory linked by `linkshmem`   */
+    // subroutines for unlinkshmem
+    .global dynomem_abi_unlinkshmem
+    // aliases for unlinkshmem
+    SYSCARG_NAME_UNLINK .req x0
+    UNLINKMEM_RET .req x0
+
+    /*  <   memory [shared|stack|dynamic] (un/re)allocaion subroutines--->    */
+
+    /*  <---Memory access subroutines   */
+
+    /*   getmemat for accessing an item in memory using a memory offset   */
+    // subroutines for getmemat
+    .global dynomem_abi_8bitalign_getmemat
+    .global dynomem_abi_16bitalign_getmemat
+    .global dynomem_abi_32bitalign_getmemat
+    .global dynomem_abi_64bitalign_getmemat
+    .global dynomem_abi_premultlen_getmemat
+    // aliases for getmemat
+    GETMEMAT_ADDR .req x0
+    GETMEMAT_OFFSET .req x1
+    GETMEMAT_RETX .req x0
+    GETMEMAT_RETW .req w0
+
+    /*  setmemat for setting the memory at an specific offset after the address  */
+    // subroutines for setmemat
+    .global dynomem_abi_8bitalign_setmemat
+    .global dynomem_abi_16bitalign_setmemat
+    .global dynomem_abi_32bitalign_setmemat
+    .global dynomem_abi_64bitalign_setmemat
+    .global dynomem_abi_premultlen_setmemat
+    // aliases for setmemat
+    SETMEMAT_ADDR .req x0
+    SETMEMAT_OFFSET .req x1
+    SETMEMAT_SETVALX .req x2
+    SETMEMAT_SETVALW .req w2
+    SETMEMAT_RET .req x0
+
+    /*   setmemval will set memory[addr+offset until addr+offset+len] to VAL */
+    // subroutines for setmemval
+    .global dynomem_abi_8bitalign_setmemval
+    .global dynomem_abi_16bitalign_setmemval
+    .global dynomem_abi_32bitalign_setmemval
+    .global dynomem_abi_64bitalign_setmemval
+    .global dynomem_abi_premultlen_setmemval
+    // aliases for setmemval
+    SETMEMVAL_ADDR .req x0
+    SETMEMVAL_OFFSET .req x1
+    SETMEMVAL_LEN .req x2
+    SETMEMVAL_SETVALX .req x3
+    SETMEMVAL_SETVALW .req w3
+    SETMEMVAL_RET .req x0
+
+    /*   setmemrange will set memory[addr+offset until addr+offset+len] to [n1, n2) */
+    // subroutines for setmemrange
+    .global dynomem_abi_8bitalign_setmemrange
+    .global dynomem_abi_16bitalign_setmemrange
+    .global dynomem_abi_32bitalign_setmemrange
+    .global dynomem_abi_64bitalign_setmemrange
+    .global dynomem_abi_premultlen_setmemrange
+    // aliases for setmemrange
+    SETMEMRANGE_ADDR .req x0
+    SETMEMRANGE_OFFSET .req x1
+    SETMEMRANGE_LEN .req x2
+    SETMEMRANGE_SETRANGE1X .req x3
+    SETMEMRANGE_SETRANGE1W .req w3
+    SETMEMRANGE_SETRANGE2X .req x4
+    SETMEMRANGE_SETRANGE2W .req w4
+    SETMEMRANGE_RET .req x0
+
+    /*  Memory access subroutines--->   */
+
+    /*  <---Memory copy/alignment subroutines   */
+
+    /*  copymem will copy a length of n from source+offset to destination   */
+    // copymem makes the assertion that data is already aligned on src.
+    // copymem subroutines
+    .global dynomem_abi_8bitalign_copymem
+    .global dynomem_abi_16bitalign_copymem
+    .global dynomem_abi_32bitalign_copymem
+    .global dynomem_abi_64bitalign_copymem
+    .global dynomem_abi_premultlen_copymem
+    // aliases for copymem
+    COPYMEM_DST_ADDR .req x0
+    COPYMEM_SRC_ADDR .req x1
+    COPYMEM_SRC_OFFSET .req x2
+    COPYMEM_COPY_LEN .req x3
+    COPYMEM_RET  .req x0
+
+    /* copymemalign copies length of n from src to dst whilst padding for alignment */
+    // copymemalign subroutines
+    .global dynomem_abi_8bitalign_copymemalign
+    .global dynomem_abi_16bitalign_copymemalign
+    .global dynomem_abi_32bitalign_copymemalign
+    .global dynomem_abi_64bitalign_copymemalign
+    .global dynomem_abi_premultlen_copymemalign
+    // aliases for copymemalign
+    COPYMEMALIGN_DST_ADDR .req x0
+    COPYMEMALIGN_SRC_ADDR .req x1
+    COPYMEMALIGN_SRC_OFFSET .req x2
+    COPYMEMALIGN_COPY_LEN .req x3
+    // alignment is only used for `premultlen`
+    COPYMEMALIGN_ALIGNMENT .req x4
+    COPYMEMALIGN_RET  .req x0
+
+    /* alignmem takes an address and pads all non-aligned cells with 0 */
+    // alignmem subroutines
+    .global dynomem_abi_8bitalign_alignmem
+    .global dynomem_abi_16bitalign_alignmem
+    .global dynomem_abi_32bitalign_alignmem
+    .global dynomem_abi_64bitalign_alignmem
+    .global dynomem_abi_premultlen_alignmem
+    // aliases for alignmem
+    ALIGNMEM_ADDR .req x0
+    ALIGNMEM_OFFSET .req x1
+    ALIGNMEM_LEN .req x2
+    // alignment is only used for `premultlen`
+    ALIGNMEM_ALIGNMENT .req x3
+    ALIGNMEM_RET  .req x0
+
+    /*  Memory copy/alignment subroutines--->   */
+
+    /*  <---Data accumulation subroutines  */
+
+    /* sumupNstep will sumup [addr+offset, addr+offset+len) stepping by N */
+    // sumupNstep subroutines --- 1 at a time
+    .global dynomem_abi_8bitalign_sumup1step
+    .global dynomem_abi_16bitalign_sumup1step
+    .global dynomem_abi_32bitalign_sumup1step
+    .global dynomem_abi_64bitalign_sumup1step
+    .global dynomem_abi_premultlen_sumup1step
+    // sumupNstep subroutines --- 2 at a time
+    .global dynomem_abi_8bitalign_sumup2step
+    .global dynomem_abi_16bitalign_sumup2step
+    .global dynomem_abi_32bitalign_sumup2step
+    .global dynomem_abi_64bitalign_sumup2step
+    .global dynomem_abi_premultlen_sumup2step
+    // sumupNstep subroutines --- 4 at a time
+    .global dynomem_abi_8bitalign_sumup4step
+    .global dynomem_abi_16bitalign_sumup4step
+    .global dynomem_abi_32bitalign_sumup4step
+    .global dynomem_abi_64bitalign_sumup4step
+    .global dynomem_abi_premultlen_sumup4step
+    // sumupNstep subroutines --- 8 at a time
+    .global dynomem_abi_8bitalign_sumup8step
+    .global dynomem_abi_16bitalign_sumup8step
+    .global dynomem_abi_32bitalign_sumup8step
+    .global dynomem_abi_64bitalign_sumup8step
+    .global dynomem_abi_premultlen_sumup8step
+    // aliases for sumupNstep
+    SUMUPNSTEP_ADDR .req x0
+    SUMUPNSTEP_OFFSET .req x1
+    SUMUPNSTEP_LEN .req x3
+    SUMUPNSTEP_RET .req x0
+
+    /* dotpNstep will inner-product [addr+offset, addr+offset+len) stepping by N */
+    // dotpNstep subroutines --- 1 at a time
+    .global dynomem_abi_8bitalign_dotp1step
+    .global dynomem_abi_16bitalign_dotp1step
+    .global dynomem_abi_32bitalign_dotp1step
+    .global dynomem_abi_64bitalign_dotp1step
+    .global dynomem_abi_premultlen_dotp1step
+    // dotpNstep subroutines --- 2 at a time
+    .global dynomem_abi_8bitalign_dotp2step
+    .global dynomem_abi_16bitalign_dotp2step
+    .global dynomem_abi_32bitalign_dotp2step
+    .global dynomem_abi_64bitalign_dotp2step
+    .global dynomem_abi_premultlen_dotp2step
+    // dotpNstep subroutines --- 4 at a time
+    .global dynomem_abi_8bitalign_dotp4step
+    .global dynomem_abi_16bitalign_dotp4step
+    .global dynomem_abi_32bitalign_dotp4step
+    .global dynomem_abi_64bitalign_dotp4step
+    .global dynomem_abi_premultlen_dotp4step
+    // dotpNstep subroutines --- 8 at a time
+    .global dynomem_abi_8bitalign_dotp8step
+    .global dynomem_abi_16bitalign_dotp8step
+    .global dynomem_abi_32bitalign_dotp8step
+    .global dynomem_abi_64bitalign_dotp8step
+    .global dynomem_abi_premultlen_dotp8step
+
+    /* l1normNstep will manhattan-distance two block ranges, stepping by N */
+    // l1normNstep subroutines --- 1 at a time
+    .global dynomem_abi_8bitalign_l1norm1step
+    .global dynomem_abi_16bitalign_l1norm1step
+    .global dynomem_abi_32bitalign_l1norm1step
+    .global dynomem_abi_64bitalign_l1norm1step
+    .global dynomem_abi_premultlen_l1norm1step
+    // l1normNstep subroutines --- 2 at a time
+    .global dynomem_abi_8bitalign_l1norm2step
+    .global dynomem_abi_16bitalign_l1norm2step
+    .global dynomem_abi_32bitalign_l1norm2step
+    .global dynomem_abi_64bitalign_l1norm2step
+    .global dynomem_abi_premultlen_l1norm2step
+    // l1normNstep subroutines --- 4 at a time
+    .global dynomem_abi_8bitalign_l1norm4step
+    .global dynomem_abi_16bitalign_l1norm4step
+    .global dynomem_abi_32bitalign_l1norm4step
+    .global dynomem_abi_64bitalign_l1norm4step
+    .global dynomem_abi_premultlen_l1norm4step
+    // l1normNstep subroutines --- 8 at a time
+    .global dynomem_abi_8bitalign_l1norm8step
+    .global dynomem_abi_16bitalign_l1norm8step
+    .global dynomem_abi_32bitalign_l1norm8step
+    .global dynomem_abi_64bitalign_l1norm8step
+    .global dynomem_abi_premultlen_l1norm8step
+    // aliases for l1normNstep
+     
+
+    /* l2normNstep will euclidean-distance two block ranges, stepping by N */
+    // l2normNstep subroutines --- 1 at a time
+    .global dynomem_abi_8bitalign_l2norm1step
+    .global dynomem_abi_16bitalign_l2norm1step
+    .global dynomem_abi_32bitalign_l2norm1step
+    .global dynomem_abi_64bitalign_l2norm1step
+    .global dynomem_abi_premultlen_l2norm1step
+    // l2normNstep subroutines --- 2 at a time
+    .global dynomem_abi_8bitalign_l2norm2step
+    .global dynomem_abi_16bitalign_l2norm2step
+    .global dynomem_abi_32bitalign_l2norm2step
+    .global dynomem_abi_64bitalign_l2norm2step
+    .global dynomem_abi_premultlen_l2norm2step
+    // l2normNstep subroutines --- 4 at a time
+    .global dynomem_abi_8bitalign_l2norm4step
+    .global dynomem_abi_16bitalign_l2norm4step
+    .global dynomem_abi_32bitalign_l2norm4step
+    .global dynomem_abi_64bitalign_l2norm4step
+    .global dynomem_abi_premultlen_l2norm4step
+    // l2normNstep subroutines --- 8 at a time
+    .global dynomem_abi_8bitalign_l2norm8step
+    .global dynomem_abi_16bitalign_l2norm8step
+    .global dynomem_abi_32bitalign_l2norm8step
+    .global dynomem_abi_64bitalign_l2norm8step
+    .global dynomem_abi_premultlen_l2norm8step
+
+    .global dynomem_abi_8bitalign_matmul
+    .global dynomem_abi_16bitalign_matmul
+    .global dynomem_abi_32bitalign_matmul
+    .global dynomem_abi_64bitalign_matmul
+    .global dynomem_abi_premultlen_matmul
+
+    /*  Data accumulation subroutines--->  */
 
 
-    /*   unlinkmem for unlinking shared memory linked by `linkmem`   */
-    // subroutines for unlinkmem
-    .global dynomem_abisubr_unlinkmem
-    // macros for unlinkmem
-    #define SYSCARG_NAME_UNLINK x0
-    #define UNLINKMEM_RET x0
+    .global dynomem_abi_8bitalign_arrlen1step
+    .global dynomem_abi_16bitalign_arrlen1step
+    .global dynomem_abi_32bitalign_arrlen1step
+    .global dynomem_abi_64bitalign_arrlen1step
+    .global dynomem_abi_premultlen_arrlen1step
 
-    .global dynomem_abisubr_byte_cpy
-    .global dynomem_abisubr_hword_cpy
-    .global dynomem_abisubr_word_cpy
-    .global dynomem_abisubr_qword_cpy
-    .global dynomem_abisubr_nbyte_cpy
+    .global dynomem_abi_8bitalign_arrlen2step
+    .global dynomem_abi_16bitalign_arrlen2step
+    .global dynomem_abi_32bitalign_arrlen2step
+    .global dynomem_abi_64bitalign_arrlen2step
+    .global dynomem_abi_premultlen_arrlen2step
 
-    .global dynomem_abisubr_byte_cpyset
-    .global dynomem_abisubr_hword_cpyset
-    .global dynomem_abisubr_word_cpyset
-    .global dynomem_abisubr_qword_cpyset
-    .global dynomem_abisubr_nbyte_cpyset
+    .global dynomem_abi_8bitalign_arrlen4step
+    .global dynomem_abi_16bitalign_arrlen4step
+    .global dynomem_abi_32bitalign_arrlen4step
+    .global dynomem_abi_64bitalign_arrlen4step
+    .global dynomem_abi_premultlen_arrlen4step
 
-    .global dynomem_abisubr_byte_valueset
-    .global dynomem_abisubr_hword_valueset
-    .global dynomem_abisubr_word_valueset
-    .global dynomem_abisubr_qword_valueset
-    .global dynomem_abisubr_nbyte_valueset
-    
-    .global dynomem_abisubr_byte_rangeset
-    .global dynomem_abisubr_hword_rangeset
-    .global dynomem_abisubr_word_rangeset
-    .global dynomem_abisubr_qword_rangeset
-    .global dynomem_abisubr_nbyte_rangeset
+    .global dynomem_abi_8bitalign_arrlen8step
+    .global dynomem_abi_16bitalign_arrlen8step
+    .global dynomem_abi_32bitalign_arrlen8step
+    .global dynomem_abi_64bitalign_arrlen8step
+    .global dynomem_abi_premultlen_arrlen8step
 
-    .global dynomem_abisubr_byte_sumup1stp
-    .global dynomem_abisubr_hword_sumup1stp
-    .global dynomem_abisubr_word_sumup1stp
-    .global dynomem_abisubr_qword_sumup1stp
-    .global dynomem_abisubr_nbyte_sumup1stp
+    .global dynomem_abi_8bitalign_compare1step
+    .global dynomem_abi_16bitalign_compare1step
+    .global dynomem_abi_32bitalign_compare1step
+    .global dynomem_abi_64bitalign_compare1step
+    .global dynomem_abi_premultlen_compare1step
 
-    .global dynomem_abisubr_byte_sumup2stp
-    .global dynomem_abisubr_hword_sumup2stp
-    .global dynomem_abisubr_word_sumup2stp
-    .global dynomem_abisubr_qword_sumup2stp
-    .global dynomem_abisubr_nbyte_sumup2stp
+    .global dynomem_abi_8bitalign_compare2step
+    .global dynomem_abi_16bitalign_compare2step
+    .global dynomem_abi_32bitalign_compare2step
+    .global dynomem_abi_64bitalign_compare2step
+    .global dynomem_abi_premultlen_compare2step
 
-    .global dynomem_abisubr_byte_sumup4stp
-    .global dynomem_abisubr_hword_sumup4stp
-    .global dynomem_abisubr_word_sumup4stp
-    .global dynomem_abisubr_qword_sumup4stp
-    .global dynomem_abisubr_nbyte_sumup4stp
+    .global dynomem_abi_8bitalign_compare4step
+    .global dynomem_abi_16bitalign_compare4step
+    .global dynomem_abi_32bitalign_compare4step
+    .global dynomem_abi_64bitalign_compare4step
+    .global dynomem_abi_premultlen_compare4step
 
-    .global dynomem_abisubr_byte_sumup8stp
-    .global dynomem_abisubr_hword_sumup8stp
-    .global dynomem_abisubr_word_sumup8stp
-    .global dynomem_abisubr_qword_sumup8stp
-    .global dynomem_abisubr_nbyte_sumup8stp
+    .global dynomem_abi_8bitalign_compare8step
+    .global dynomem_abi_16bitalign_compare8step
+    .global dynomem_abi_32bitalign_compare8step
+    .global dynomem_abi_64bitalign_compare8step
+    .global dynomem_abi_premultlen_compare8step
 
-    .global dynomem_abisubr_byte_dotp1stp
-    .global dynomem_abisubr_hword_dotp1stp
-    .global dynomem_abisubr_word_dotp1stp
-    .global dynomem_abisubr_qword_dotp1stp
-    .global dynomem_abisubr_nbyte_dotp1stp
+    .global dynomem_abi_8bitalign_checkfree1step
+    .global dynomem_abi_16bitalign_checkfree1step
+    .global dynomem_abi_32bitalign_checkfree1step
+    .global dynomem_abi_64bitalign_checkfree1step
+    .global dynomem_abi_premultlen_checkfree1step
 
-    .global dynomem_abisubr_byte_dotp2stp
-    .global dynomem_abisubr_hword_dotp2stp
-    .global dynomem_abisubr_word_dotp2stp
-    .global dynomem_abisubr_qword_dotp2stp
-    .global dynomem_abisubr_nbyte_dotp2stp
+    .global dynomem_abi_8bitalign_checkfree2step
+    .global dynomem_abi_16bitalign_checkfree2step
+    .global dynomem_abi_32bitalign_checkfree2step
+    .global dynomem_abi_64bitalign_checkfree2step
+    .global dynomem_abi_premultlen_checkfree2step
 
-    .global dynomem_abisubr_byte_dotp4stp
-    .global dynomem_abisubr_hword_dotp4stp
-    .global dynomem_abisubr_word_dotp4stp
-    .global dynomem_abisubr_qword_dotp4stp
-    .global dynomem_abisubr_nbyte_dotp4stp
+    .global dynomem_abi_8bitalign_checkfree4step
+    .global dynomem_abi_16bitalign_checkfree4step
+    .global dynomem_abi_32bitalign_checkfree4step
+    .global dynomem_abi_64bitalign_checkfree4step
+    .global dynomem_abi_premultlen_checkfree4step
 
-    .global dynomem_abisubr_byte_dotp8stp
-    .global dynomem_abisubr_hword_dotp8stp
-    .global dynomem_abisubr_word_dotp8stp
-    .global dynomem_abisubr_qword_dotp8stp
-    .global dynomem_abisubr_nbyte_dotp8stp
-
-    .global dynomem_abisubr_byte_l1norm1stp
-    .global dynomem_abisubr_hword_l1norm1stp
-    .global dynomem_abisubr_word_l1norm1stp
-    .global dynomem_abisubr_qword_l1norm1stp
-    .global dynomem_abisubr_nbyte_l1norm1stp
-
-    .global dynomem_abisubr_byte_l1norm2stp
-    .global dynomem_abisubr_hword_l1norm2stp
-    .global dynomem_abisubr_word_l1norm2stp
-    .global dynomem_abisubr_qword_l1norm2stp
-    .global dynomem_abisubr_nbyte_l1norm2stp
-
-    .global dynomem_abisubr_byte_l1norm4stp
-    .global dynomem_abisubr_hword_l1norm4stp
-    .global dynomem_abisubr_word_l1norm4stp
-    .global dynomem_abisubr_qword_l1norm4stp
-    .global dynomem_abisubr_nbyte_l1norm4stp
-
-    .global dynomem_abisubr_byte_l1norm8stp
-    .global dynomem_abisubr_hword_l1norm8stp
-    .global dynomem_abisubr_word_l1norm8stp
-    .global dynomem_abisubr_qword_l1norm8stp
-    .global dynomem_abisubr_nbyte_l1norm8stp
-
-    .global dynomem_abisubr_byte_l3norm1stp
-    .global dynomem_abisubr_hword_l3norm1stp
-    .global dynomem_abisubr_word_l3norm1stp
-    .global dynomem_abisubr_qword_l3norm1stp
-    .global dynomem_abisubr_nbyte_l3norm1stp
-
-    .global dynomem_abisubr_byte_l3norm2stp
-    .global dynomem_abisubr_hword_l3norm2stp
-    .global dynomem_abisubr_word_l3norm2stp
-    .global dynomem_abisubr_qword_l3norm2stp
-    .global dynomem_abisubr_nbyte_l3norm2stp
-
-    .global dynomem_abisubr_byte_l3norm4stp
-    .global dynomem_abisubr_hword_l3norm4stp
-    .global dynomem_abisubr_word_l3norm4stp
-    .global dynomem_abisubr_qword_l3norm4stp
-    .global dynomem_abisubr_nbyte_l3norm4stp
-
-    .global dynomem_abisubr_byte_l3norm8stp
-    .global dynomem_abisubr_hword_l3norm8stp
-    .global dynomem_abisubr_word_l3norm8stp
-    .global dynomem_abisubr_qword_l3norm8stp
-    .global dynomem_abisubr_nbyte_l3norm8stp
-
-    .global dynomem_abisubr_byte_matmul
-    .global dynomem_abisubr_hword_matmul
-    .global dynomem_abisubr_word_matmul
-    .global dynomem_abisubr_qword_matmul
-    .global dynomem_abisubr_nbyte_matmul
-
-    .global dynomem_abisubr_byte_arrlen1stp
-    .global dynomem_abisubr_hword_arrlen1stp
-    .global dynomem_abisubr_word_arrlen1stp
-    .global dynomem_abisubr_qword_arrlen1stp
-    .global dynomem_abisubr_nbyte_arrlen1stp
-
-    .global dynomem_abisubr_byte_arrlen2stp
-    .global dynomem_abisubr_hword_arrlen2stp
-    .global dynomem_abisubr_word_arrlen2stp
-    .global dynomem_abisubr_qword_arrlen2stp
-    .global dynomem_abisubr_nbyte_arrlen2stp
-
-    .global dynomem_abisubr_byte_arrlen4stp
-    .global dynomem_abisubr_hword_arrlen4stp
-    .global dynomem_abisubr_word_arrlen4stp
-    .global dynomem_abisubr_qword_arrlen4stp
-    .global dynomem_abisubr_nbyte_arrlen4stp
-
-    .global dynomem_abisubr_byte_arrlen8stp
-    .global dynomem_abisubr_hword_arrlen8stp
-    .global dynomem_abisubr_word_arrlen8stp
-    .global dynomem_abisubr_qword_arrlen8stp
-    .global dynomem_abisubr_nbyte_arrlen8stp
-
-    .global dynomem_abisubr_byte_compare1stp
-    .global dynomem_abisubr_hword_compare1stp
-    .global dynomem_abisubr_word_compare1stp
-    .global dynomem_abisubr_qword_compare1stp
-    .global dynomem_abisubr_nbyte_compare1stp
-
-    .global dynomem_abisubr_byte_compare2stp
-    .global dynomem_abisubr_hword_compare2stp
-    .global dynomem_abisubr_word_compare2stp
-    .global dynomem_abisubr_qword_compare2stp
-    .global dynomem_abisubr_nbyte_compare2stp
-
-    .global dynomem_abisubr_byte_compare4stp
-    .global dynomem_abisubr_hword_compare4stp
-    .global dynomem_abisubr_word_compare4stp
-    .global dynomem_abisubr_qword_compare4stp
-    .global dynomem_abisubr_nbyte_compare4stp
-
-    .global dynomem_abisubr_byte_compare8stp
-    .global dynomem_abisubr_hword_compare8stp
-    .global dynomem_abisubr_word_compare8stp
-    .global dynomem_abisubr_qword_compare8stp
-    .global dynomem_abisubr_nbyte_compare8stp
-
-    .global dynomem_abisubr_byte_checkfree1stp
-    .global dynomem_abisubr_hword_checkfree1stp
-    .global dynomem_abisubr_word_checkfree1stp
-    .global dynomem_abisubr_qword_checkfree1stp
-    .global dynomem_abisubr_nbyte_checkfree1stp
-
-    .global dynomem_abisubr_byte_checkfree2stp
-    .global dynomem_abisubr_hword_checkfree2stp
-    .global dynomem_abisubr_word_checkfree2stp
-    .global dynomem_abisubr_qword_checkfree2stp
-    .global dynomem_abisubr_nbyte_checkfree2stp
-
-    .global dynomem_abisubr_byte_checkfree4stp
-    .global dynomem_abisubr_hword_checkfree4stp
-    .global dynomem_abisubr_word_checkfree4stp
-    .global dynomem_abisubr_qword_checkfree4stp
-    .global dynomem_abisubr_nbyte_checkfree4stp
-
-    .global dynomem_abisubr_byte_checkfree8stp
-    .global dynomem_abisubr_hword_checkfree8stp
-    .global dynomem_abisubr_word_checkfree8stp
-    .global dynomem_abisubr_qword_checkfree8stp
-    .global dynomem_abisubr_nbyte_checkfree8stp
+    .global dynomem_abi_8bitalign_checkfree8step
+    .global dynomem_abi_16bitalign_checkfree8step
+    .global dynomem_abi_32bitalign_checkfree8step
+    .global dynomem_abi_64bitalign_checkfree8step
+    .global dynomem_abi_premultlen_checkfree8step
 
     /*  <---utility subroutines  */
 
@@ -406,34 +405,34 @@
 
     /*  getlen calculates the length of an array in bytes */
     // subroutines for getlen
-    .global dynomem_abisubr_byte_getlen
-    .global dynomem_abisubr_hword_getlen
-    .global dynomem_abisubr_word_getlen
-    .global dynomem_abisubr_dword_getlen
-    .global dynomem_abisubr_nbyte_getlen
-    // macros for getlen
-    #define GETLEN_NITEMS x0
-    #define GETLEN_NBYTES x1
-    #define GETLEN_RET    x0
+    .global dynomem_abi_8bitalign_getlen
+    .global dynomem_abi_16bitalign_getlen
+    .global dynomem_abi_32bitalign_getlen
+    .global dynomem_abi_dwordalign_getlen
+    .global dynomem_abi_premultlen_getlen
+    // aliases for getlen
+    .req GETLEN_NITEMS x0
+    .req GETLEN_NBYTES x1
+    .req GETLEN_RET    x0
 
     /*  getalign calculates the padding range base on the alignment. */
     // subroutines for getalign
-    .global dynomem_abisubr_byte_getalign
-    .global dynomem_abisubr_hword_getalign
-    .global dynomem_abisubr_word_getalign
-    .global dynomem_abisubr_dword_getalign
-    .global dynomem_abisubr_nbyte_getalign
-    // macros for getalign
-    #define GETALIGN_OFFSET x0
-    #define GETALIGN_NBYTES x1
-    #define GETALIGN_RET    x0
+    .global dynomem_abi_8bitalign_getalign
+    .global dynomem_abi_16bitalign_getalign
+    .global dynomem_abi_32bitalign_getalign
+    .global dynomem_abi_dwordalign_getalign
+    .global dynomem_abi_premultlen_getalign
+    // aliases for getalign
+    .req GETALIGN_OFFSET x0
+    .req GETALIGN_NBYTES x1
+    .req GETALIGN_RET    x0
 
     /*    utility subroutines--->  */
 
 .text
 
 
-dynomem_abisubr_byte_arrlen2stp: 
+dynomem_abi_8bitalign_arrlen2step: 
     lsl OFFSET_ARRLEN, OFFSET_ARRLEN, #3
     add ADDR_ARRLEN, ADDR_ARRLEN, OFFSET_ARRLEN
     mov TMPADDR_ARRLEN, ADDR_ARRLEN       
@@ -461,7 +460,7 @@ dynomem_abisubr_byte_arrlen2stp:
     ret
 
 
-dynomem_abisubr_hword_arrlen2stp: 
+dynomem_abi_16bitalign_arrlen2step: 
     lsl OFFSET_ARRLEN, OFFSET_ARRLEN, #4
     add ADDR_ARRLEN, ADDR_ARRLEN, OFFSET_ARRLEN
     mov TMPADDR_ARRLEN, ADDR_ARRLEN      
@@ -488,7 +487,7 @@ dynomem_abisubr_hword_arrlen2stp:
 5:             
     ret
 
-dynomem_abisubr_word_arrlen2stp: 
+dynomem_abi_32bitalign_arrlen2step: 
     lsl OFFSET_ARRLEN, OFFSET_ARRLEN, #5
     add ADDR_ARRLEN, ADDR_ARRLEN, OFFSET_ARRLEN
     mov TMPADDR_ARRLEN, ADDR_ARRLEN       
@@ -515,7 +514,7 @@ dynomem_abisubr_word_arrlen2stp:
 5:             
     ret
 
-dynomem_abisubr_qword_arrlen2stp: 
+dynomem_abi_64bitalign_arrlen2step: 
     lsl OFFSET_ARRLEN, OFFSET_ARRLEN, #6
     add ADDR_ARRLEN, ADDR_ARRLEN, OFFSET_ARRLEN
     mov TMPADDR_ARRLEN, ADDR_ARRLEN       
@@ -542,7 +541,7 @@ dynomem_abisubr_qword_arrlen2stp:
 5:             
     ret
 
-dynomem_abisubr_nbyte_arrlen2stp: 
+dynomem_abi_premultlen_arrlen2step: 
     lsl OFFSET_ARRLEN, OFFSET_ARRLEN, NUM_BYTES
     add ADDR_ARRLEN, ADDR_ARRLEN, OFFSET_ARRLEN
     mov TMPADDR_ARRLEN, ADDR_ARRLEN       
@@ -589,7 +588,7 @@ dynoalloc:
 
     mov SYSCARG_LEN, TMP_SYSCARG_LEN
 
-    mov SYSCREG, SYS_mmap        
+    mov SYSCALLREG, SYS_mmap        
     mov SYSCARG_ADDR, xzr             
     mov SYSCARG_PROT, SYSCARG_PROT_RXW        
     mov SYSCARG_FLAGS, MAP_SYSCARG_FLAGS       
@@ -617,7 +616,7 @@ dynorealloc:
     mov OLD_SIZE, TMP_SYSCARG_OLDSIZE
     mov NEW_SIZE, TMP_SYSCARG_NEWSIZE
     
-    mov SYSCREG, SYS_mremap      
+    mov SYSCALLREG, SYS_mremap      
     mov SYSCARG_FLAGS, #0              
     mov SYSCARG_NEWADDR_REMAP, xzr             
     svc #0                  
@@ -638,7 +637,7 @@ dynounalloc:
 
     mov SYSCARG_LEN_UNALLOC, TMP_LENUNALLOC
 
-    mov SYSCREG, SYS_munmap       
+    mov SYSCALLREG, SYS_munmap       
     svc #0
 
     ldr lr, [sp], #8
@@ -657,7 +656,7 @@ dynowordcpy:
     ret
 
 // extern void dynostrcpy(void *dst, void *src, usize charnum)
-dynomem_abisubr_bytec_py:
+dynomem_abi_bytec_py:
 1:
     ldrb TMP_BYTE, [ADDR_STR_SRC, STRLEN]
     strb TMP_BYTE, [ADDR_STR_DST, STRLEN]
@@ -668,8 +667,8 @@ dynomem_abisubr_bytec_py:
     ret
 
 
-// extern usize dynomem_abisubr_getlen(usize num)
-dynomem_abisubr_getlen:
+// extern usize dynomem_abi_getlen(usize num)
+dynomem_abi_getlen:
     sub ROUNDUP_P2, ROUNDUP_P2, #1
     shr ROUNDUP_P2, ROUNDUP_P2, #4
     shr ROUNDUP_P2, ROUNDUP_P2, #8
